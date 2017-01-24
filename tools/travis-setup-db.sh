@@ -66,5 +66,5 @@ elif [ $DB = 'mssql' ]; then
         -v "$(pwd)/apps/ejabberd/priv/mssql2012.sql:/mssql2012.sql:ro"
         --name=mongooseim-mssql microsoft/mssql-server-linux
     docker ps
-    tools/wait_for_service.sh mongooseim-riak 1433 || docker logs mongooseim-mssql
+    tools/wait_for_service.sh mongooseim-mssql 1433 || docker logs mongooseim-mssql
 fi
