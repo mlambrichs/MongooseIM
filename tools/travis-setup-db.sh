@@ -63,7 +63,7 @@ elif [ $DB = 'cassandra' ]; then
 elif [ $DB = 'mssql' ]; then
     docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=${TRAVIS_DB_PASSWORD}' \
         -p 1433:1433 -d \
-        -v "$(pwd)/apps/ejabberd/priv/mssql2012.sql:/mssql2012.sql:ro"
+        -v "$(pwd)/apps/ejabberd/priv/mssql2012.sql:/mssql2012.sql:ro" \
         --name=mongooseim-mssql microsoft/mssql-server-linux
     docker ps
     tools/wait_for_service.sh mongooseim-mssql 1433 || docker logs mongooseim-mssql
