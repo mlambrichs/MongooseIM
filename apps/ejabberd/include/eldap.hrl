@@ -25,22 +25,6 @@
 
 -type scope() :: baseObject | singleLevel | wholeSubtree.
 
--record(eldap_search,
-        {scope = wholeSubtree,
-         base = <<"">>,
-         filter,
-         limit = 0,
-         attributes = [],
-         types_only = false,
-         deref_aliases = neverDerefAliases,
-         timeout = 0}).
-
--record(eldap_search_result, {entries = []   :: [eldap:eldap_entry()],
-                              referrals = [] :: list()}).
-
--record(eldap_entry, {object_name = <<>> :: binary(),
-                      attributes = []    :: [{binary(), [binary()]}]}).
-
 -type tlsopts() :: [{encrypt, tls | starttls | none} |
                     {tls_cacertfile, binary() | undefined} |
                     {tls_depth, non_neg_integer() | undefined} |
@@ -53,5 +37,5 @@
                        dn = <<"">> :: binary(),
                        password = <<"">> :: binary(),
                        base = <<"">> :: binary(),
-                       deref_aliases = never :: never | searching |
-                                                finding | always}).
+                       deref = neverDerefAliases :: neverDerefAliases | derefInSearching |
+                                                    derefFindingBaseObj | derefAlways}).

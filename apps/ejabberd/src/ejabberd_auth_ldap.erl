@@ -61,7 +61,7 @@
 
 -include("ejabberd.hrl").
 -include("eldap.hrl").
-
+-include_lib("eldap/include/eldap.hrl").
 -record(state,
        {host = <<"">>          :: ejabberd:lserver(),
         eldap_id = <<"">>      :: binary(),
@@ -77,7 +77,8 @@
         ufilter = <<"">>       :: binary(),
         sfilter = <<"">>       :: binary(),
         lfilter                :: {any(), any()} | undefined,
-        deref_aliases = never  :: never | searching | finding | always,
+        deref = neverDerefAliases  :: neverDerefAliases | derefInSearching |
+                                      derefFindingBaseObj | derefAlways,
         dn_filter              :: binary() | undefined,
         dn_filter_attrs = []   :: [binary()]
        }).
@@ -316,7 +317,7 @@ get_vh_registered_users_ldap(LServer) ->
                                  [{base, State#state.base},
                                   {filter, EldapFilter},
                                   {timeout, ?LDAP_SEARCH_TIMEOUT},
-                                  {deref_aliases, State#state.deref_aliases},
+                                  {deref, State#state.deref},
                                   {attributes, ResAttrs}])
               of
             #eldap_search_result{entries = Entries} ->
@@ -378,13 +379,13 @@ find_user_dn(LUser, State) ->
       {ok, Filter} ->
           case eldap_pool:search(State#state.eldap_id,
                                  [{base, State#state.base}, {filter, Filter},
-                                  {deref_aliases, State#state.deref_aliases},
+                                  {deref, State#state.deref},
                                   {attributes, ResAttrs}])
               of
-            #eldap_search_result{entries =
+            {ok, #eldap_search_result{entries =
                                      [#eldap_entry{attributes = Attrs,
                                                    object_name = DN}
-                                      | _]} ->
+                                      | _]}} ->
                 dn_filter(DN, Attrs, State);
             _ -> false
           end;
@@ -432,7 +433,7 @@ is_valid_dn(DN, Attrs, State) ->
           case eldap_pool:search(State#state.eldap_id,
                                  [{base, State#state.base},
                                   {filter, EldapFilter},
-                                  {deref_aliases, State#state.deref_aliases},
+                                  {deref, State#state.deref},
                                   {attributes, [<<"dn">>]}])
               of
             #eldap_search_result{entries = [_ | _]} -> DN;
@@ -476,8 +477,8 @@ local_filter(notequal, Attrs, FilterMatch) ->
 -spec result_attrs(state()) -> maybe_improper_list().
 result_attrs(#state{uids = UIDs,
                     dn_filter_attrs = DNFilterAttrs}) ->
-    lists:foldl(fun ({UID}, Acc) -> [UID | Acc];
-                    ({UID, _}, Acc) -> [UID | Acc]
+    lists:foldl(fun ({UID}, Acc) -> [binary_to_list(UID) | Acc];
+                    ({UID, _}, Acc) -> [binary_to_list(UID) | Acc]
                 end,
                 DNFilterAttrs, UIDs).
 
@@ -540,7 +541,7 @@ parse_options(Host) ->
            dn = Cfg#eldap_config.dn,
            password = Cfg#eldap_config.password,
            base = Cfg#eldap_config.base,
-           deref_aliases = Cfg#eldap_config.deref_aliases,
+           deref = Cfg#eldap_config.deref,
            uids = UIDs, ufilter = UserFilter,
            sfilter = SearchFilter, lfilter = LocalFilter,
            dn_filter = DNFilter, dn_filter_attrs = DNFilterAttrs}.

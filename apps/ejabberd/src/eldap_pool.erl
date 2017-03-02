@@ -40,7 +40,7 @@
 
 -spec bind(binary(), _, _) -> any().
 bind(PoolName, DN, Passwd) ->
-    do_request(PoolName, {bind, [DN, Passwd]}).
+    do_request(PoolName, {simple_bind, [DN, Passwd]}).
 
 
 -spec search(binary(), _) -> any().
@@ -71,19 +71,26 @@ start_link(Name, Hosts, Backups, Port, Rootdn, Passwd, Opts) ->
     PoolName = make_id(Name),
     pg2:create(PoolName),
     lists:foreach(fun (Host) ->
-                          ID = list_to_binary(erlang:ref_to_list(make_ref())),
-                          case catch eldap:start_link(ID, [Host | Backups],
-                                                      Port, Rootdn, Passwd,
-                                                      Opts)
+                          case catch eldap:open([binary_to_list(Host)])
                               of
-                            {ok, Pid} -> pg2:join(PoolName, Pid);
-                            Err ->
+                            {ok, Pid} ->
+                              ldap_authenticate(Pid, Rootdn, Passwd, PoolName);
+                            {error, Err} ->
                                   ?INFO_MSG("Err = ~p", [Err]),
                                   error
                           end
                   end,
                   Hosts).
 
+ldap_authenticate(Handle, Rootdn, Password, PoolName) ->
+  case eldap:simple_bind(Handle, binary_to_list(Rootdn), binary_to_list(Password)) of
+    ok ->
+      ?INFO_MSG("LDAP authentication successful for Rootdn ~p~n", [Rootdn]),
+      pg2:join(PoolName, Handle);
+    {error, Reason} = Err ->
+      ?INFO_MSG("Err = ~p", [Reason]),
+      Err
+  end.
 
 -spec stop(binary()) -> 'ok'.
 stop(Name) ->

@@ -84,7 +84,7 @@ parse(L) ->
                    {error, any()} | {ok, eldap:filter()}.
 
 parse(L, SList) ->
-    case catch eldap_filter_yecc:parse(scan(binary_to_list(L), SList)) of
+    case catch eldap_filter_yecc:parse(scan(maybe_binary_to_list(L), SList)) of
         {'EXIT', _} = Err ->
             {error, Err};
         {error, {_, _, Msg}} ->
@@ -95,10 +95,16 @@ parse(L, SList) ->
             {error, Err}
     end.
 
+
 %%====================================================================
 %% Internal functions
 %%====================================================================
 -define(do_scan(L), scan(Rest, <<>>, [{L, 1} | check(Buf, S) ++ Result], L, S)).
+
+maybe_binary_to_list(El) when is_list(El) ->
+  El;
+maybe_binary_to_list(El) when is_binary(El) ->
+  binary_to_list(El).
 
 
 -spec scan([byte()], _) -> [{atom(), 1} | {'str', 1, [any()]}].
@@ -137,7 +143,7 @@ scan([], Buf, Result, _, S) ->
 check(<<>>, _) ->
     [];
 check(Buf, S) ->
-    [{str, 1, binary_to_list(do_sub(Buf, S))}].
+    [{str, 1, maybe_binary_to_list(do_sub(Buf, S))}].
 
 
 -define(MAX_RECURSION, 100).
@@ -172,4 +178,4 @@ replace_amps(Bin) ->
         fun($&) -> "\\&";
            ($\\) -> "\\\\";
            (Chr) -> [Chr]
-        end, binary_to_list(Bin))).
+        end, maybe_binary_to_list(Bin))).
