@@ -53,6 +53,7 @@
 -include("eldap.hrl").
 -include("mod_vcard.hrl").
 -include("jlib.hrl").
+-include_lib("eldap/include/eldap.hrl").
 
 -define(PROCNAME, ejabberd_mod_vcard_ldap).
 
@@ -77,7 +78,7 @@
          search_reported_attrs = [] :: [binary()],
          search_operator            :: 'or' | 'and',
          binary_search_fields       :: [binary()],
-         deref_aliases = never      :: never | searching | finding | always,
+         deref = neverDerefAliases  :: neverDerefAliases | derefInSearching | derefFindingBaseObj | derefAlways,
          matches = 0                :: non_neg_integer()}).
 
 -define(VCARD_MAP,
@@ -239,7 +240,7 @@ find_ldap_user(User, State) ->
       {ok, EldapFilter} ->
           case eldap_pool:search(Eldap_ID,
                                  [{base, Base}, {filter, EldapFilter},
-                                  {deref_aliases, State#state.deref_aliases},
+                                  {deref, State#state.deref},
                                   {attributes, VCardAttrs}])
               of
             #eldap_search_result{entries = [E | _]} -> E;
@@ -372,7 +373,7 @@ search_internal(State, Data) ->
                           eldap_utils:make_filter(Data, UIDs, Op)]),
     case eldap_pool:search(Eldap_ID,
                            [{base, Base}, {filter, Filter}, {limit, Limit},
-                            {deref_aliases, State#state.deref_aliases},
+                            {deref, State#state.deref},
                             {attributes, ReportedAttrs}])
         of
       #eldap_search_result{entries = E} ->
@@ -550,7 +551,7 @@ parse_options(Host, Opts) ->
            dn = Cfg#eldap_config.dn,
            password = Cfg#eldap_config.password,
            base = Cfg#eldap_config.base,
-           deref_aliases = Cfg#eldap_config.deref_aliases,
+           deref = Cfg#eldap_config.deref,
            uids = UIDs, vcard_map = VCardMap,
            vcard_map_attrs = VCardMapAttrs,
            user_filter = UserFilter, search_filter = SearchFilter,
