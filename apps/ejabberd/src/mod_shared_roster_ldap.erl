@@ -43,7 +43,7 @@
          out_subscription/5]).
 
 -export([config_change/4]).
-
+-include_lib("eldap/include/eldap.hrl").
 -include("ejabberd.hrl").
 -include("jlib.hrl").
 -include("mod_roster.hrl").
