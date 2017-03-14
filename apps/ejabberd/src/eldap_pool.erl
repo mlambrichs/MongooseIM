@@ -76,7 +76,7 @@ start_link(Name, Hosts, Backups, Port, Rootdn, Passwd, Opts) ->
                             {ok, Pid} ->
                               ldap_authenticate(Pid, Rootdn, Passwd, PoolName);
                             {error, Err} ->
-                                  ?INFO_MSG("Err = ~p", [Err]),
+                                  ?ERROR_MSG("LDAP connection failed with reason: ~p", [Err]),
                                   error
                           end
                   end,
@@ -88,7 +88,7 @@ ldap_authenticate(Handle, Rootdn, Password, PoolName) ->
       ?INFO_MSG("LDAP authentication successful for Rootdn ~p~n", [Rootdn]),
       pg2:join(PoolName, Handle);
     {error, Reason} = Err ->
-      ?INFO_MSG("Err = ~p", [Reason]),
+      ?ERROR_MSG("LDAP authentication unsuccessful with readon: ~p", [Reason]),
       Err
   end.
 
