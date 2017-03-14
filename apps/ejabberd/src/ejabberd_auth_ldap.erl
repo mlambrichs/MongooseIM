@@ -176,12 +176,13 @@ check_password(LUser, LServer, Password, _Digest,
                    Password :: binary())
       -> ok | {error, not_allowed | invalid_jid}.
 set_password(LUser, LServer, Password) ->
+  PassString = binary_to_list(Password),
     {ok, State} = eldap_utils:get_state(LServer, ?MODULE),
     case find_user_dn(LUser, State) of
       false -> {error, user_not_found};
       DN ->
-          eldap_pool:modify_passwd(State#state.eldap_id, DN,
-                                   Password)
+          eldap_pool:modify_password(State#state.eldap_id, DN,
+                                   PassString)
     end.
 
 

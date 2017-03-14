@@ -30,7 +30,7 @@
 
 %% API
 -export([start_link/7, stop/1, bind/3, search/2, delete/2, add/3,
-         modify_passwd/3]).
+         modify_password/3]).
 
 -include("ejabberd.hrl").
 
@@ -48,9 +48,9 @@ search(PoolName, Opts) ->
     do_request(PoolName, {search, [Opts]}).
 
 
--spec modify_passwd(binary(), _, _) -> any().
-modify_passwd(PoolName, DN, Passwd) ->
-    do_request(PoolName, {modify_passwd, [DN, Passwd]}).
+-spec modify_password(binary(), _, _) -> any().
+modify_password(PoolName, DN, Passwd) ->
+    do_request(PoolName, {modify_password, [DN, Passwd]}).
 
 
 -spec delete(binary(), _) -> any().
@@ -105,7 +105,7 @@ stop(Name) ->
 %% Internal functions
 %%====================================================================
 
--type f() :: add | bind | delete | modify_passwd | search.
+-type f() :: add | bind | delete | modify_password | search.
 -spec do_request(Name :: binary(), {f(), [any(), ...]}) -> any().
 do_request(Name, {F, Args}) ->
     case pg2:get_closest_pid(make_id(Name)) of
